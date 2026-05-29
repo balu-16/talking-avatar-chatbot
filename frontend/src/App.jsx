@@ -5,7 +5,7 @@ import ChatPanel from './components/ChatPanel';
 import Avatar3D from './components/Avatar3D';
 import './App.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL !== undefined ? import.meta.env.VITE_API_URL : '';
 
 function App() {
   const [visemes, setVisemes] = useState([]);
