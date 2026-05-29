@@ -9,7 +9,8 @@ from pathlib import Path
 import edge_tts
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -84,9 +85,8 @@ def text_to_visemes(text: str) -> list:
     current_time = 0.0
     
     for word in words:
-        # Simple phoneme estimation per character
         chars = word.lower()
-        char_duration = 0.08  # ~80ms per character sound
+        char_duration = 0.08
         
         for i, char in enumerate(chars):
             if char in 'aeiou':
@@ -125,7 +125,6 @@ def text_to_visemes(text: str) -> list:
             })
             current_time += char_duration
         
-        # Small pause between words
         visemes.append({
             "time": round(current_time, 3),
             "viseme": "viseme_sil",
@@ -170,9 +169,8 @@ async def generate_tts(text: str) -> tuple:
     
     audio_b64 = base64.b64encode(audio_data).decode()
     
-    # Estimate duration (~150 words per minute average)
     word_count = len(text.split())
-    duration = word_count / 2.5  # rough estimate in seconds
+    duration = word_count / 2.5
     
     os.unlink(temp_path)
     return audio_b64, duration
@@ -225,6 +223,24 @@ async def chat(request: Request):
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+# Serve frontend static files
+FRONTEND_DIR = Path(__file__).parent / "static"
+
+if FRONTEND_DIR.exists():
+    app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIR / "assets")), name="assets")
+    
+    @app.get("/")
+    async def serve_index():
+        return FileResponse(str(FRONTEND_DIR / "index.html"))
+    
+    @app.get("/{path:path}")
+    async def serve_static(path: str):
+        file_path = FRONTEND_DIR / path
+        if file_path.exists() and file_path.is_file():
+            return FileResponse(str(file_path))
+        return FileResponse(str(FRONTEND_DIR / "index.html"))
 
 
 if __name__ == "__main__":
