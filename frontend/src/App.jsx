@@ -1,107 +1,128 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment } from '@react-three/drei';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import ChatPanel from './components/ChatPanel';
-import Avatar3D from './components/Avatar3D';
+import AvatarScene from './components/AvatarScene';
 import './App.css';
 
 const API_URL = import.meta.env.VITE_API_URL !== undefined ? import.meta.env.VITE_API_URL : '';
 
 function App() {
-  const [visemes, setVisemes] = useState([]);
   const [sentiment, setSentiment] = useState('neutral');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef(null);
-  
+  const avatarContainerRef = useRef(null);
+  const avatarSceneRef = useRef(null);
+
+  // Initialize vanilla Three.js avatar
+  useEffect(() => {
+    if (!avatarContainerRef.current) return;
+    const scene = new AvatarScene(avatarContainerRef.current);
+    avatarSceneRef.current = scene;
+
+    return () => {
+      scene.dispose();
+      avatarSceneRef.current = null;
+    };
+  }, []);
+
+  // Sync state to avatar scene
+  useEffect(() => {
+    if (avatarSceneRef.current) {
+      avatarSceneRef.current.setSentiment(sentiment);
+    }
+  }, [sentiment]);
+
+  useEffect(() => {
+    if (avatarSceneRef.current) {
+      avatarSceneRef.current.setSpeaking(isSpeaking);
+    }
+  }, [isSpeaking]);
+
   const handleSendMessage = useCallback(async (message) => {
     setIsLoading(true);
-    
+
     try {
       const response = await fetch(`${API_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message }),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
-      // Set visemes and sentiment
-      setVisemes(data.visemes || []);
+
+      // Update avatar
       setSentiment(data.sentiment || 'neutral');
       setIsSpeaking(true);
-      
+
+      if (avatarSceneRef.current) {
+        avatarSceneRef.current.setVisemes(data.visemes || []);
+        avatarSceneRef.current.setSentiment(data.sentiment || 'neutral');
+        avatarSceneRef.current.setSpeaking(true);
+      }
+
       // Play audio
       if (data.audio) {
         const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
         audioRef.current = audio;
-        
+
         audio.onended = () => {
           setIsSpeaking(false);
-          setVisemes([]);
+          if (avatarSceneRef.current) {
+            avatarSceneRef.current.setVisemes([]);
+            avatarSceneRef.current.setSpeaking(false);
+          }
         };
-        
+
         audio.onerror = () => {
           setIsSpeaking(false);
-          setVisemes([]);
+          if (avatarSceneRef.current) {
+            avatarSceneRef.current.setVisemes([]);
+            avatarSceneRef.current.setSpeaking(false);
+          }
         };
-        
+
         await audio.play();
       }
-      
+
       setIsLoading(false);
       return data.response;
-      
+
     } catch (error) {
       console.error('Error:', error);
       setIsLoading(false);
       setIsSpeaking(false);
+      if (avatarSceneRef.current) {
+        avatarSceneRef.current.setSpeaking(false);
+      }
       return 'Sorry, I encountered an error. Please try again.';
     }
   }, []);
-  
+
   return (
     <div className="app-container">
       {/* Chat Panel - Left Side */}
       <div className="chat-section">
         <ChatPanel onSendMessage={handleSendMessage} isLoading={isLoading} />
       </div>
-      
+
       {/* Avatar - Top Right */}
       <div className="avatar-section">
         <div className="avatar-container">
-          <Canvas
-            camera={{ position: [0, 0, 3], fov: 50 }}
-            style={{ background: 'transparent' }}
-          >
-            {/* Lighting */}
-            <ambientLight intensity={0.5} />
-            <directionalLight position={[5, 5, 5]} intensity={0.8} castShadow />
-            <pointLight position={[-3, 3, 3]} intensity={0.4} />
-            
-            {/* Avatar */}
-            <Avatar3D
-              visemes={visemes}
-              sentiment={sentiment}
-              isSpeaking={isSpeaking}
-            />
-            
-            {/* Controls */}
-            <OrbitControls
-              enableZoom={false}
-              enablePan={false}
-              minPolarAngle={Math.PI / 3}
-              maxPolarAngle={Math.PI / 1.5}
-            />
-            
-            {/* Environment for reflections */}
-            <Environment preset="studio" />
-          </Canvas>
-          
+          {/* Vanilla Three.js renders into this div */}
+          <div
+            ref={avatarContainerRef}
+            style={{
+              width: '100%',
+              height: '100%',
+              background: 'linear-gradient(180deg, #f5e6d3 0%, #e8d5c0 100%)',
+              borderRadius: '17px',
+            }}
+          />
+
           {/* Speaking Indicator */}
           {isSpeaking && (
             <div className="speaking-indicator">
@@ -109,15 +130,15 @@ function App() {
               <span>🗣️ Speaking...</span>
             </div>
           )}
-          
+
           {/* Sentiment Badge */}
           <div className={`sentiment-badge sentiment-${sentiment}`}>
-            {sentiment === 'happy' ? '😊' : 
-             sentiment === 'sad' ? '😢' : 
+            {sentiment === 'happy' ? '😊' :
+             sentiment === 'sad' ? '😢' :
              sentiment === 'thinking' ? '🤔' : '😐'}
           </div>
         </div>
-        
+
         {/* Status Bar */}
         <div className="status-bar">
           <div className="status-item">
@@ -129,7 +150,7 @@ function App() {
           </div>
         </div>
       </div>
-      
+
       {/* Background Gradient */}
       <div className="background-gradient"></div>
     </div>
