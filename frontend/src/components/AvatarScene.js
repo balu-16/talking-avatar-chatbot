@@ -219,19 +219,15 @@ export default class AvatarScene {
     philtrum.position.set(0, -0.28, 1.0);
     this.headGroup.add(philtrum);
 
-    // Lip crease line
-    const creaseMat = new THREE.MeshStandardMaterial({ color: 0x8a5540, roughness: 0.8 });
-    const crease = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.004, 0.01), creaseMat);
-    crease.position.set(0, -0.33, 0.98);
-    this.headGroup.add(crease);
 
     this._lowerLip = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.032, 0.04), lowerLipMat);
     this._lowerLip.position.set(0, -0.345, 0.97);
     this.headGroup.add(this._lowerLip);
 
     this._mouthInterior = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 12), interiorMat);
-    this._mouthInterior.scale.set(0.075, 0.001, 0.02);
+    this._mouthInterior.scale.set(0.075, 0.0001, 0.02);
     this._mouthInterior.position.set(0, -0.34, 0.95);
+    this._mouthInterior.visible = false;
     this.headGroup.add(this._mouthInterior);
 
     this._teeth = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.017, 0.008), teethMat);
@@ -241,40 +237,43 @@ export default class AvatarScene {
   }
 
   _buildHair() {
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0x2a1508, roughness: 0.95, side: THREE.DoubleSide });
-    const hairLightMat = new THREE.MeshStandardMaterial({ color: 0x3a2010, roughness: 0.9 });
+    const hairMat = new THREE.MeshStandardMaterial({ color: 0x1a0e06, roughness: 0.95 });
+    const hairHighlightMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0e, roughness: 0.9 });
 
-    // Main hair cap
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.58), hairMat);
-    cap.position.set(0, 0.25, -0.02);
-    cap.scale.set(0.92, 0.7, 0.86);
-    this.headGroup.add(cap);
+    // Full hair shell — a complete hemisphere that covers the entire top of the head
+    // Use a sphere slightly larger than the head, cut at the hairline
+    const hairShell = new THREE.Mesh(
+      new THREE.SphereGeometry(1.03, 32, 24, 0, Math.PI * 2, 0, Math.PI * 0.52),
+      hairMat
+    );
+    hairShell.position.set(0, 0.08, 0.02);
+    this.headGroup.add(hairShell);
 
-    // Side hair L
-    const sideL = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 12), hairMat);
-    sideL.position.set(-0.58, 0.12, 0.05);
-    sideL.scale.set(0.18, 0.38, 0.28);
-    sideL.rotation.z = 0.25;
+    // Hair volume on top — fills any gap at the crown
+    const volume = new THREE.Mesh(
+      new THREE.SphereGeometry(0.6, 24, 16),
+      hairHighlightMat
+    );
+    volume.position.set(0, 0.55, 0.0);
+    volume.scale.set(1.0, 0.45, 0.9);
+    this.headGroup.add(volume);
+
+    // Side hair L — blends into the shell
+    const sideL = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), hairMat);
+    sideL.position.set(-0.62, 0.0, 0.08);
+    sideL.scale.set(0.8, 1.4, 1.0);
     this.headGroup.add(sideL);
 
     // Side hair R
-    const sideR = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 12), hairMat);
-    sideR.position.set(0.58, 0.12, 0.05);
-    sideR.scale.set(0.18, 0.38, 0.28);
-    sideR.rotation.z = -0.25;
+    const sideR = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), hairMat);
+    sideR.position.set(0.62, 0.0, 0.08);
+    sideR.scale.set(0.8, 1.4, 1.0);
     this.headGroup.add(sideR);
 
-    // Top volume
-    const top = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), hairLightMat);
-    top.position.set(0, 0.42, 0.08);
-    top.scale.set(0.78, 0.38, 0.72);
-    this.headGroup.add(top);
-
-    // Fringe
-    const fringe = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), hairMat);
-    fringe.position.set(0, 0.22, 0.94);
-    fringe.scale.set(0.52, 0.1, 0.18);
-    fringe.rotation.x = -0.35;
+    // Fringe — hangs over the forehead
+    const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 10), hairMat);
+    fringe.position.set(0, 0.2, 0.82);
+    fringe.scale.set(0.9, 0.15, 0.3);
     this.headGroup.add(fringe);
   }
 
@@ -448,11 +447,15 @@ export default class AvatarScene {
       this._lowerLip.scale.x = 1 + spread * 0.25;
     }
     if (this._mouthInterior) {
-      this._mouthInterior.scale.y = Math.max(0.001, open * 4);
-      this._mouthInterior.scale.x = 1 + spread * 0.3;
+      const isOpen = open > 0.008;
+      this._mouthInterior.visible = isOpen;
+      if (isOpen) {
+        this._mouthInterior.scale.y = open * 4;
+        this._mouthInterior.scale.x = 1 + spread * 0.3;
+      }
     }
     if (this._teeth) {
-      this._teeth.visible = open > 0.01;
+      this._teeth.visible = open > 0.015;
     }
 
     // ── Eye gaze ──
