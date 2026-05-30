@@ -209,8 +209,15 @@ export default class AvatarScene {
     const interiorMat = new THREE.MeshStandardMaterial({ color: 0x1a0808, roughness: 0.95 });
     const teethMat = new THREE.MeshStandardMaterial({ color: 0xeee8dd, roughness: 0.35 });
 
-    this._upperLip = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.03, 0.035), upperLipMat);
-    this._upperLip.position.set(0, -0.32, 0.97);
+    // Skin patch behind lips — prevents any dark line showing through when closed
+    const lipBackingMat = new THREE.MeshStandardMaterial({ color: 0xe8c4a0, roughness: 0.65, metalness: 0.02 });
+    this._lipBacking = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 0.05), lipBackingMat);
+    this._lipBacking.position.set(0, -0.33, 0.94);
+    this.headGroup.add(this._lipBacking);
+
+    // Upper lip — taller to overlap lower lip when closed
+    this._upperLip = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.04, 0.04), upperLipMat);
+    this._upperLip.position.set(0, -0.315, 0.98);
     this.headGroup.add(this._upperLip);
 
     // Philtrum (groove above upper lip)
@@ -219,35 +226,43 @@ export default class AvatarScene {
     philtrum.position.set(0, -0.28, 1.0);
     this.headGroup.add(philtrum);
 
-
-    this._lowerLip = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.032, 0.04), lowerLipMat);
-    this._lowerLip.position.set(0, -0.345, 0.97);
+    // Lower lip — positioned to meet upper lip with no gap
+    this._lowerLip = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.04, 0.04), lowerLipMat);
+    this._lowerLip.position.set(0, -0.345, 0.98);
     this.headGroup.add(this._lowerLip);
 
+    // Mouth interior — NOT added to scene. Only added dynamically when speaking.
     this._mouthInterior = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 12), interiorMat);
     this._mouthInterior.scale.set(0.075, 0.0001, 0.02);
     this._mouthInterior.position.set(0, -0.34, 0.95);
-    this._mouthInterior.visible = false;
-    this.headGroup.add(this._mouthInterior);
 
+    // Teeth — NOT added to scene. Only added dynamically when speaking.
     this._teeth = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.017, 0.008), teethMat);
     this._teeth.position.set(0, -0.325, 0.98);
-    this._teeth.visible = false;
-    this.headGroup.add(this._teeth);
   }
 
   _buildHair() {
     const hairMat = new THREE.MeshStandardMaterial({ color: 0x1a0e06, roughness: 0.95 });
     const hairHighlightMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0e, roughness: 0.9 });
 
-    // Full hair shell — a complete hemisphere that covers the entire top of the head
-    // Use a sphere slightly larger than the head, cut at the hairline
+    // Full hair shell — a complete hemisphere covering the top and upper sides of the head
+    // theta range 0 to 0.65*PI covers well past the equator for full coverage
     const hairShell = new THREE.Mesh(
-      new THREE.SphereGeometry(1.03, 32, 24, 0, Math.PI * 2, 0, Math.PI * 0.52),
+      new THREE.SphereGeometry(1.04, 32, 24, 0, Math.PI * 2, 0, Math.PI * 0.65),
       hairMat
     );
-    hairShell.position.set(0, 0.08, 0.02);
+    hairShell.position.set(0, 0.1, 0.02);
     this.headGroup.add(hairShell);
+
+    // Hair band — thick ring around the hairline to seal any gaps
+    const hairBand = new THREE.Mesh(
+      new THREE.TorusGeometry(0.92, 0.08, 8, 32),
+      hairMat
+    );
+    hairBand.position.set(0, 0.0, 0.0);
+    hairBand.rotation.x = Math.PI * 0.5;
+    hairBand.scale.set(1.05, 1.0, 0.6);
+    this.headGroup.add(hairBand);
 
     // Hair volume on top — fills any gap at the crown
     const volume = new THREE.Mesh(
@@ -438,7 +453,7 @@ export default class AvatarScene {
     const spread = this._mouthSpread;
 
     if (this._upperLip) {
-      this._upperLip.position.y = -0.32 + open * 0.25;
+      this._upperLip.position.y = -0.315 + open * 0.25;
       this._upperLip.scale.x = 1 + spread * 0.35;
     }
     if (this._lowerLip) {
@@ -448,14 +463,23 @@ export default class AvatarScene {
     }
     if (this._mouthInterior) {
       const isOpen = open > 0.008;
-      this._mouthInterior.visible = isOpen;
+      if (isOpen && !this._mouthInterior.parent) {
+        this.headGroup.add(this._mouthInterior);
+      } else if (!isOpen && this._mouthInterior.parent) {
+        this.headGroup.remove(this._mouthInterior);
+      }
       if (isOpen) {
         this._mouthInterior.scale.y = open * 4;
         this._mouthInterior.scale.x = 1 + spread * 0.3;
       }
     }
     if (this._teeth) {
-      this._teeth.visible = open > 0.015;
+      const showTeeth = open > 0.015;
+      if (showTeeth && !this._teeth.parent) {
+        this.headGroup.add(this._teeth);
+      } else if (!showTeeth && this._teeth.parent) {
+        this.headGroup.remove(this._teeth);
+      }
     }
 
     // ── Eye gaze ──
