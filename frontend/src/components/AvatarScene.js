@@ -209,14 +209,14 @@ export default class AvatarScene {
     const interiorMat = new THREE.MeshStandardMaterial({ color: 0x1a0808, roughness: 0.95 });
     const teethMat = new THREE.MeshStandardMaterial({ color: 0xeee8dd, roughness: 0.35 });
 
-    // Skin patch behind lips — prevents any dark line showing through when closed
+    // Skin patch behind lips — prevents dark line when closed
     const lipBackingMat = new THREE.MeshStandardMaterial({ color: 0xe8c4a0, roughness: 0.65, metalness: 0.02 });
-    this._lipBacking = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 0.05), lipBackingMat);
+    this._lipBacking = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.06, 0.04), lipBackingMat);
     this._lipBacking.position.set(0, -0.33, 0.94);
     this.headGroup.add(this._lipBacking);
 
-    // Upper lip — taller to overlap lower lip when closed
-    this._upperLip = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.04, 0.04), upperLipMat);
+    // Upper lip — natural size
+    this._upperLip = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.025, 0.03), upperLipMat);
     this._upperLip.position.set(0, -0.315, 0.98);
     this.headGroup.add(this._upperLip);
 
@@ -226,69 +226,58 @@ export default class AvatarScene {
     philtrum.position.set(0, -0.28, 1.0);
     this.headGroup.add(philtrum);
 
-    // Lower lip — positioned to meet upper lip with no gap
-    this._lowerLip = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.04, 0.04), lowerLipMat);
-    this._lowerLip.position.set(0, -0.345, 0.98);
+    // Lower lip — natural size, meets upper lip
+    this._lowerLip = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.025, 0.03), lowerLipMat);
+    this._lowerLip.position.set(0, -0.338, 0.98);
     this.headGroup.add(this._lowerLip);
 
     // Mouth interior — NOT added to scene. Only added dynamically when speaking.
     this._mouthInterior = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 12), interiorMat);
-    this._mouthInterior.scale.set(0.075, 0.0001, 0.02);
-    this._mouthInterior.position.set(0, -0.34, 0.95);
+    this._mouthInterior.scale.set(0.06, 0.0001, 0.02);
+    this._mouthInterior.position.set(0, -0.33, 0.95);
 
     // Teeth — NOT added to scene. Only added dynamically when speaking.
-    this._teeth = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.017, 0.008), teethMat);
-    this._teeth.position.set(0, -0.325, 0.98);
+    this._teeth = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.015, 0.008), teethMat);
+    this._teeth.position.set(0, -0.32, 0.98);
   }
 
   _buildHair() {
     const hairMat = new THREE.MeshStandardMaterial({ color: 0x1a0e06, roughness: 0.95 });
     const hairHighlightMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0e, roughness: 0.9 });
 
-    // Full hair shell — a complete hemisphere covering the top and upper sides of the head
-    // theta range 0 to 0.65*PI covers well past the equator for full coverage
+    // Hair shell — covers top of head only (theta 0 to ~83°, stays above the equator)
     const hairShell = new THREE.Mesh(
-      new THREE.SphereGeometry(1.04, 32, 24, 0, Math.PI * 2, 0, Math.PI * 0.65),
+      new THREE.SphereGeometry(1.04, 32, 24, 0, Math.PI * 2, 0, Math.PI * 0.46),
       hairMat
     );
-    hairShell.position.set(0, 0.1, 0.02);
+    hairShell.position.set(0, 0.05, 0.02);
     this.headGroup.add(hairShell);
-
-    // Hair band — thick ring around the hairline to seal any gaps
-    const hairBand = new THREE.Mesh(
-      new THREE.TorusGeometry(0.92, 0.08, 8, 32),
-      hairMat
-    );
-    hairBand.position.set(0, 0.0, 0.0);
-    hairBand.rotation.x = Math.PI * 0.5;
-    hairBand.scale.set(1.05, 1.0, 0.6);
-    this.headGroup.add(hairBand);
 
     // Hair volume on top — fills any gap at the crown
     const volume = new THREE.Mesh(
-      new THREE.SphereGeometry(0.6, 24, 16),
+      new THREE.SphereGeometry(0.55, 24, 16),
       hairHighlightMat
     );
     volume.position.set(0, 0.55, 0.0);
-    volume.scale.set(1.0, 0.45, 0.9);
+    volume.scale.set(1.0, 0.4, 0.9);
     this.headGroup.add(volume);
 
-    // Side hair L — blends into the shell
-    const sideL = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), hairMat);
-    sideL.position.set(-0.62, 0.0, 0.08);
-    sideL.scale.set(0.8, 1.4, 1.0);
+    // Side hair L — above ears, not on face
+    const sideL = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), hairMat);
+    sideL.position.set(-0.62, 0.2, 0.15);
+    sideL.scale.set(0.8, 1.0, 1.0);
     this.headGroup.add(sideL);
 
-    // Side hair R
-    const sideR = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), hairMat);
-    sideR.position.set(0.62, 0.0, 0.08);
-    sideR.scale.set(0.8, 1.4, 1.0);
+    // Side hair R — above ears, not on face
+    const sideR = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), hairMat);
+    sideR.position.set(0.62, 0.2, 0.15);
+    sideR.scale.set(0.8, 1.0, 1.0);
     this.headGroup.add(sideR);
 
-    // Fringe — hangs over the forehead
+    // Fringe — hangs over the forehead (shorter, doesn't cover face)
     const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 10), hairMat);
-    fringe.position.set(0, 0.2, 0.82);
-    fringe.scale.set(0.9, 0.15, 0.3);
+    fringe.position.set(0, 0.22, 0.78);
+    fringe.scale.set(0.85, 0.12, 0.25);
     this.headGroup.add(fringe);
   }
 
@@ -457,7 +446,7 @@ export default class AvatarScene {
       this._upperLip.scale.x = 1 + spread * 0.35;
     }
     if (this._lowerLip) {
-      this._lowerLip.position.y = -0.345 - open * 0.8;
+      this._lowerLip.position.y = -0.338 - open * 0.8;
       this._lowerLip.scale.y = 1 + Math.max(0, open) * 3;
       this._lowerLip.scale.x = 1 + spread * 0.25;
     }
