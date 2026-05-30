@@ -118,17 +118,17 @@ export default class AvatarScene {
 
     const makeEye = (xPos) => {
       const group = new THREE.Group();
-      group.position.set(xPos, 0.12, 0.97);
+      group.position.set(xPos, 0.12, 0.96);
 
       // Sclera
-      const sclera = new THREE.Mesh(new THREE.SphereGeometry(0.1, 24, 24), scleraMat);
+      const sclera = new THREE.Mesh(new THREE.SphereGeometry(0.095, 24, 24), scleraMat);
       group.add(sclera);
 
       // Iris/pupil sub-group (for gaze)
       const irisGroup = new THREE.Group();
       irisGroup.position.set(0, 0, 0);
-      irisGroup.add(new THREE.Mesh(new THREE.SphereGeometry(0.052, 20, 20), irisMat));
-      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.025, 16, 16), pupilMat);
+      irisGroup.add(new THREE.Mesh(new THREE.SphereGeometry(0.05, 20, 20), irisMat));
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.022, 16, 16), pupilMat);
       pupil.position.z = 0.025;
       irisGroup.add(pupil);
       const highlight = new THREE.Mesh(new THREE.SphereGeometry(0.008, 8, 8), highlightMat);
@@ -137,12 +137,12 @@ export default class AvatarScene {
       group.add(irisGroup);
 
       // Upper eyelid
-      const lidGeo = new THREE.SphereGeometry(0.1, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.5);
+      const lidGeo = new THREE.SphereGeometry(0.095, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.4);
       const lidMat = new THREE.MeshStandardMaterial({ color: 0xdfc0a0, roughness: 0.8, side: THREE.DoubleSide });
       const upperLid = new THREE.Mesh(lidGeo, lidMat);
-      upperLid.position.set(0, 0.055, 0.04);
-      upperLid.scale.set(1.15, 0.45, 0.9);
-      upperLid.rotation.x = 0.3;
+      upperLid.position.set(0, 0.065, 0.03);
+      upperLid.scale.set(1.1, 0.35, 0.9);
+      upperLid.rotation.x = 0.25;
       group.add(upperLid);
 
       this.headGroup.add(group);
@@ -159,7 +159,7 @@ export default class AvatarScene {
 
   _buildEyebrows() {
     const browMat = new THREE.MeshStandardMaterial({ color: 0x3a2010, roughness: 0.9 });
-    const browGeo = new THREE.BoxGeometry(0.17, 0.025, 0.03);
+    const browGeo = new THREE.BoxGeometry(0.15, 0.025, 0.03);
 
     this._leftBrow = new THREE.Mesh(browGeo, browMat);
     this._leftBrow.position.set(-0.24, 0.3, 0.95);
@@ -181,12 +181,12 @@ export default class AvatarScene {
     const nostrilMat = new THREE.MeshStandardMaterial({ color: 0xb8906a, roughness: 0.9 });
 
     const bridge = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 12), bridgeMat);
-    bridge.scale.set(0.055, 0.1, 0.04);
+    bridge.scale.set(0.06, 0.12, 0.045);
     bridge.position.set(0, 0.06, 0);
     noseGroup.add(bridge);
 
     const tip = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 12), tipMat);
-    tip.scale.set(0.06, 0.04, 0.04);
+    tip.scale.set(0.07, 0.045, 0.045);
     tip.position.set(0, -0.02, 0.03);
     noseGroup.add(tip);
 
@@ -209,20 +209,32 @@ export default class AvatarScene {
     const interiorMat = new THREE.MeshStandardMaterial({ color: 0x1a0808, roughness: 0.95 });
     const teethMat = new THREE.MeshStandardMaterial({ color: 0xeee8dd, roughness: 0.35 });
 
-    this._upperLip = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.03, 0.035), upperLipMat);
+    this._upperLip = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.03, 0.035), upperLipMat);
     this._upperLip.position.set(0, -0.32, 0.97);
     this.headGroup.add(this._upperLip);
 
-    this._lowerLip = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.032, 0.04), lowerLipMat);
+    // Philtrum (groove above upper lip)
+    const philtrumMat = new THREE.MeshStandardMaterial({ color: 0xd8b090, roughness: 0.7 });
+    const philtrum = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.04, 0.02), philtrumMat);
+    philtrum.position.set(0, -0.28, 1.0);
+    this.headGroup.add(philtrum);
+
+    // Lip crease line
+    const creaseMat = new THREE.MeshStandardMaterial({ color: 0x8a5540, roughness: 0.8 });
+    const crease = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.004, 0.01), creaseMat);
+    crease.position.set(0, -0.33, 0.98);
+    this.headGroup.add(crease);
+
+    this._lowerLip = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.032, 0.04), lowerLipMat);
     this._lowerLip.position.set(0, -0.345, 0.97);
     this.headGroup.add(this._lowerLip);
 
     this._mouthInterior = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 12), interiorMat);
-    this._mouthInterior.scale.set(0.08, 0.001, 0.02);
+    this._mouthInterior.scale.set(0.075, 0.001, 0.02);
     this._mouthInterior.position.set(0, -0.34, 0.95);
     this.headGroup.add(this._mouthInterior);
 
-    this._teeth = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.018, 0.008), teethMat);
+    this._teeth = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.017, 0.008), teethMat);
     this._teeth.position.set(0, -0.325, 0.98);
     this._teeth.visible = false;
     this.headGroup.add(this._teeth);
@@ -233,9 +245,9 @@ export default class AvatarScene {
     const hairLightMat = new THREE.MeshStandardMaterial({ color: 0x3a2010, roughness: 0.9 });
 
     // Main hair cap
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.55), hairMat);
-    cap.position.set(0, 0.5, -0.08);
-    cap.scale.set(0.82, 0.48, 0.74);
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.58), hairMat);
+    cap.position.set(0, 0.25, -0.02);
+    cap.scale.set(0.92, 0.7, 0.86);
     this.headGroup.add(cap);
 
     // Side hair L
@@ -253,14 +265,14 @@ export default class AvatarScene {
     this.headGroup.add(sideR);
 
     // Top volume
-    const top = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), hairLightMat);
-    top.position.set(0, 0.62, 0.12);
-    top.scale.set(0.6, 0.18, 0.48);
+    const top = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), hairLightMat);
+    top.position.set(0, 0.42, 0.08);
+    top.scale.set(0.78, 0.38, 0.72);
     this.headGroup.add(top);
 
     // Fringe
     const fringe = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), hairMat);
-    fringe.position.set(0, 0.38, 0.94);
+    fringe.position.set(0, 0.22, 0.94);
     fringe.scale.set(0.52, 0.1, 0.18);
     fringe.rotation.x = -0.35;
     this.headGroup.add(fringe);
@@ -427,17 +439,17 @@ export default class AvatarScene {
     const spread = this._mouthSpread;
 
     if (this._upperLip) {
-      this._upperLip.position.y = -0.32 + open * 0.3;
-      this._upperLip.scale.x = 1 + spread * 0.5;
+      this._upperLip.position.y = -0.32 + open * 0.25;
+      this._upperLip.scale.x = 1 + spread * 0.35;
     }
     if (this._lowerLip) {
-      this._lowerLip.position.y = -0.345 - open;
-      this._lowerLip.scale.y = 1 + Math.max(0, open) * 4;
-      this._lowerLip.scale.x = 1 + spread * 0.3;
+      this._lowerLip.position.y = -0.345 - open * 0.8;
+      this._lowerLip.scale.y = 1 + Math.max(0, open) * 3;
+      this._lowerLip.scale.x = 1 + spread * 0.25;
     }
     if (this._mouthInterior) {
-      this._mouthInterior.scale.y = Math.max(0.001, open * 6);
-      this._mouthInterior.scale.x = 1 + spread * 0.4;
+      this._mouthInterior.scale.y = Math.max(0.001, open * 4);
+      this._mouthInterior.scale.x = 1 + spread * 0.3;
     }
     if (this._teeth) {
       this._teeth.visible = open > 0.01;
@@ -446,11 +458,11 @@ export default class AvatarScene {
     // ── Eye gaze ──
     let lookX, lookY;
     if (this._isSpeaking) {
-      lookX = Math.sin(time * 0.6) * 0.03;
-      lookY = Math.cos(time * 0.4) * 0.02;
+      lookX = Math.sin(time * 0.6) * 0.02;
+      lookY = Math.cos(time * 0.4) * 0.015;
     } else {
-      lookX = Math.sin(time * 0.08) * 0.015;
-      lookY = Math.cos(time * 0.06) * 0.01;
+      lookX = Math.sin(time * 0.08) * 0.01;
+      lookY = Math.cos(time * 0.06) * 0.008;
     }
     if (this._leftIris) {
       this._leftIris.position.x = lookX;
